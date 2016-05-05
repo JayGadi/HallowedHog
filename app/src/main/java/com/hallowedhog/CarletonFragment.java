@@ -31,8 +31,8 @@ public class CarletonFragment extends Fragment {
     private ArticleAdapter articleAdapter;
     private ArrayList<String> articleList;
     private FTPClient client;
-    private ArrayList<Bitmap> articleImages;
-    private HashMap<String, Bitmap> articlesInfo;
+    private ArrayList<String> articleImages;
+    private ArrayList<ArticleInformation> articleInformation;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -43,11 +43,11 @@ public class CarletonFragment extends Fragment {
         client = new FTPClient();
         articleList = new ArrayList<>();
         articleImages = new ArrayList<>();
-        articlesInfo = new HashMap<>();
+
 
 
         articles = (ListView) view.findViewById(R.id.carleton_list);
-        articleAdapter = new ArticleAdapter(articleList, articleImages, getActivity());
+        articleAdapter = new ArticleAdapter(articleInformation, getActivity());
 
         articles.setAdapter(articleAdapter);
 
@@ -56,7 +56,7 @@ public class CarletonFragment extends Fragment {
         return view;
     }
 
-    private class CarletonAsync extends AsyncTask<Void, Void, ArrayList<String>> {
+    private class CarletonAsync extends AsyncTask<Void, Void, ArrayList<ArticleInformation>> {
 
         FTPClient client;
 
@@ -66,7 +66,7 @@ public class CarletonFragment extends Fragment {
 
 
         @Override
-        protected ArrayList<String> doInBackground(Void... params) {
+        protected ArrayList<ArticleInformation> doInBackground(Void... params) {
 
             FTPFile[] files = null;
 
@@ -90,24 +90,28 @@ public class CarletonFragment extends Fragment {
                     files = client.listFiles("/public_html/archives/Carleton/" + article);
                     for(FTPFile file: files){
                         if(file.getName().contains("Picture")){
-                            articleImages.add(BitmapFactory.decodeStream((InputStream) new URL("http://hallowedhog.com/archives/Carleton/" + article + "/" + file.getName()).getContent()));
+                            articleImages.add("http://hallowedhog.com/archives/Carleton/" + article + "/" + file.getName());
                         }
                     }
                 }
                 Log.d("Article Images Size", "" + articleImages.size());
+                for(int i = 0; i < articleList.size(); i++){
+                    articleInformation.add(new ArticleInformation(articleImages.get(i), articleList.get(i)));
+                }
+
             }catch(IOException e){
                 e.printStackTrace();
             }
 
-            return articleList;
+            return articleInformation;
         }
 
         @Override
-        protected void onPostExecute(ArrayList<String> result) {
+        protected void onPostExecute(ArrayList<ArticleInformation> result) {
             super.onPostExecute(result);
             Log.d("Result Size", "" + result.size());
             articleAdapter.addAll(result);
-            //articleAdapter.notifyDataSetChanged();
+            articleAdapter.notifyDataSetChanged();
             articles.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
