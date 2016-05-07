@@ -1,6 +1,7 @@
 package com.hallowedhog;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
@@ -30,10 +31,11 @@ public class TopFragment extends Fragment {
 
     private ImageView topArticle;
     private ListView topList;
-    private ArticleAdapter articleAdapter;
+    private ArticleInformationAdapter articleAdapter;
     private ArrayList<String> articleList;
     private FTPClient client;
-    private ArrayList<Bitmap> articleImages;
+    private ArrayList<String> articleImages;
+    private ArrayList<ArticleInformation> articleInformation;
     int count = 0;
 
     @Override
@@ -45,10 +47,11 @@ public class TopFragment extends Fragment {
         client = new FTPClient();
         articleList = new ArrayList<>();
         articleImages = new ArrayList<>();
+        articleInformation = new ArrayList<>();
 
         topArticle = (ImageView) view.findViewById(R.id.top_article);
         topList = (ListView) view.findViewById(R.id.top_list);
-        articleAdapter = new ArticleAdapter(articleList, articleImages, getActivity());
+        articleAdapter = new ArticleInformationAdapter(articleInformation, getActivity());
 
         topList.setAdapter(articleAdapter);
 
@@ -67,7 +70,7 @@ public class TopFragment extends Fragment {
         }
         return null;
     }
-    private class TopAsync extends AsyncTask<Void, Void, ArrayList<String>> {
+    private class TopAsync extends AsyncTask<Void, Void, ArrayList<ArticleInformation>> {
 
         FTPClient client;
 
@@ -75,9 +78,27 @@ public class TopFragment extends Fragment {
             this.client = client;
         }
 
+        private ProgressDialog pDlg = null;
+
+        private void showProgressDialog() {
+
+            pDlg = new ProgressDialog(getActivity());
+            pDlg.setMessage("Retrieving Articles");
+            pDlg.setProgressDrawable(getActivity().getWallpaper());
+            pDlg.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            pDlg.setCancelable(false);
+            pDlg.show();
+
+        }
 
         @Override
-        protected ArrayList<String> doInBackground(Void... params) {
+        protected void onPreExecute() {
+            super.onPreExecute();
+            showProgressDialog();
+        }
+
+        @Override
+        protected ArrayList<ArticleInformation> doInBackground(Void... params) {
 
             FTPFile[] files = null;
             String image  = null;
@@ -89,56 +110,61 @@ public class TopFragment extends Fragment {
                 files = client.listFiles("/public_html/archives/Carleton");
                 articleList.add(files[files.length - 1].getName());
                 image = getPictureExtension(client.listFiles("/public_html/archives/Carleton/" + files[files.length - 1].getName()));
-                articleImages.add(BitmapFactory.decodeStream((InputStream) new URL("http://hallowedhog.com/archives/Carleton/" + files[files.length - 1].getName() + "/" + image).getContent()));
+                articleImages.add("http://hallowedhog.com/archives/Carleton/" + files[files.length - 1].getName() + "/" + image);
                 files = client.listFiles("/public_html/archives/Comics");
                 articleList.add(files[files.length-1].getName());
                 image = getPictureExtension(client.listFiles("/public_html/archives/Comics/" + files[files.length - 1].getName()));
-                articleImages.add(BitmapFactory.decodeStream((InputStream) new URL("http://hallowedhog.com/archives/Comics/" + files[files.length - 1].getName() + "/" + image).getContent()));
+                articleImages.add("http://hallowedhog.com/archives/Comics/" + files[files.length - 1].getName() + "/" + image);
                 files = client.listFiles("/public_html/archives/Politics");
                 articleList.add(files[files.length-1].getName());
                 image = getPictureExtension(client.listFiles("/public_html/archives/Politics/" + files[files.length - 1].getName()));
-                articleImages.add(BitmapFactory.decodeStream((InputStream) new URL("http://hallowedhog.com/archives/Politics/" + files[files.length - 1].getName() + "/" + image).getContent()));
+                articleImages.add("http://hallowedhog.com/archives/Politics/" + files[files.length - 1].getName() + "/" + image);
                 files = client.listFiles("/public_html/archives/PopCulture");
                 articleList.add(files[files.length-1].getName());
                 image = getPictureExtension(client.listFiles("/public_html/archives/PopCulture/" + files[files.length - 1].getName()));
-                articleImages.add(BitmapFactory.decodeStream((InputStream) new URL("http://hallowedhog.com/archives/PopCulture/" + files[files.length - 1].getName() + "/" + image).getContent()));
+                articleImages.add("http://hallowedhog.com/archives/PopCulture/" + files[files.length - 1].getName() + "/" + image);
                 files = client.listFiles("/public_html/archives/Sports");
                 articleList.add(files[files.length-1].getName());
                 image = getPictureExtension(client.listFiles("/public_html/archives/Sports/" + files[files.length - 1].getName()));
-                articleImages.add(BitmapFactory.decodeStream((InputStream) new URL("http://hallowedhog.com/archives/Sports/" + files[files.length - 1].getName() + "/" + image).getContent()));
+                articleImages.add("http://hallowedhog.com/archives/Sports/" + files[files.length - 1].getName() + "/" + image);
                 files = client.listFiles("/public_html/archives/WorldwideAffairs");
                 articleList.add(files[files.length-1].getName());
                 image = getPictureExtension(client.listFiles("/public_html/archives/WorldwideAffairs/" + files[files.length - 1].getName()));
-                articleImages.add(BitmapFactory.decodeStream((InputStream) new URL("http://hallowedhog.com/archives/WorldwideAffairs/" + files[files.length - 1].getName() + "/" + image).getContent()));
+                articleImages.add("http://hallowedhog.com/archives/WorldwideAffairs/" + files[files.length - 1].getName() + "/" + image);
                 Log.d("Article Size", "" + articleList.size());
                 Log.d("Article Image Size", "" + articleImages.size());
+
+                for(int i = 0; i < articleList.size(); i++){
+                    articleInformation.add(new ArticleInformation(articleImages.get(i), articleList.get(i)));
+                }
 
 
             }catch(IOException e){
                 e.printStackTrace();
             }
 
-            return articleList;
+            return articleInformation;
         }
 
         @Override
-        protected void onPostExecute(ArrayList<String> result) {
+        protected void onPostExecute(ArrayList<ArticleInformation> result) {
             super.onPostExecute(result);
-            articleAdapter.addAll(result);
+            pDlg.dismiss();
+            articleAdapter.setArticleInformation(result);
 
-            topArticle.setImageBitmap(articleImages.get(count));
+            /*topArticle.setImageDrawable(AsyncImageLoader.loadImageFromUrl(articleImages.get(count)));
             topArticle.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
 
-                    topArticle.setImageBitmap(articleImages.get(count++));
+                    topArticle.setImageDrawable(AsyncImageLoader.loadImageFromUrl(articleImages.get(count++)));
                     if(count == articleImages.size()){
                         count = 0;
                     }
                 }
-            });
+            });*/
 
-            //articleAdapter.notifyDataSetChanged();
+            articleAdapter.notifyDataSetChanged();
 
             /*
             articles.setOnItemClickListener(new AdapterView.OnItemClickListener() {

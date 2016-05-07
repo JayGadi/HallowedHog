@@ -16,20 +16,51 @@ import java.util.List;
 /**
  * Created by Jay on 5/1/2016.
  */
-public class ArticleAdapter extends ArrayAdapter<ArticleInformation> {
+public class ArticleAdapter extends ArrayAdapter<String> {
 
-    private List<ArticleInformation> articleInformation;
+    private List<String> articles;
+    private List<Bitmap> articleImages;
     private Context context;
 
-    public ArticleAdapter(List<ArticleInformation> articleInformation, Context context){
+    public ArticleAdapter(List<String> articles, List<Bitmap> articleImages, Context context){
 
-        super(context, 0, articleInformation);
+        super(context, android.R.layout.simple_list_item_1, articles);
         this.context = context;
-        this.articleInformation = articleInformation;
-
+        this.articles = articles;
+        this.articleImages = articleImages;
 
     }
 
+    public int getArticleCount(){
+        if(articles != null)
+            return articles.size();
+        return 0;
+    }
+
+    public int getImageCount(){
+        if(articleImages != null)
+            return articleImages.size();
+        return 0;
+    }
+
+    public Bitmap getImage(int position){
+        if(articleImages != null){
+            return articleImages.get(position);
+        }
+        return null;
+    }
+    public String getArticle(int position){
+        if(articles != null){
+            return articles.get(position);
+        }
+        return null;
+    }
+
+    public long getItemID(int position){
+        if(articles != null)
+            return articles.get(position).hashCode();
+        return 0;
+    }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent){
@@ -39,10 +70,28 @@ public class ArticleAdapter extends ArrayAdapter<ArticleInformation> {
             v = inflater.inflate(R.layout.article_list_layout, null);
         }
 
-        ArticleInformation articleInfo = getItem(position);
+        List<String> articlesFormat = new ArrayList<>();
+        List<Bitmap> imagesFormat = new ArrayList<>();
+        for(String articleFormat: articles){
+            articleFormat = articleFormat.substring(11);
+            articlesFormat.add(articleFormat.replaceAll("\\+", " "));
+        }
 
-        ImageView articleImage = (ImageView) v.findViewById(R.id.article_picture);
-        
+        String article = articlesFormat.get(position);
+
+        TextView articleTitle = (TextView) v.findViewById(R.id.article_title);
+
+
+        articleTitle.setText(article);
+
+
+        /*for(Bitmap images : articleImages){
+            imagesFormat.add(Bitmap.createScaledBitmap(images, 220, 220, false));
+        }*/
+
+        //Bitmap image = imagesFormat.get(position);
+        //ImageView articlePicture = (ImageView) v.findViewById(R.id.article_picture);
+        //articlePicture.setImageBitmap(image);
 
 
 

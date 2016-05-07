@@ -1,5 +1,6 @@
 package com.hallowedhog;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -28,7 +29,7 @@ import java.util.Iterator;
 public class CarletonFragment extends Fragment {
 
     private ListView articles;
-    private ArticleAdapter articleAdapter;
+    private ArticleInformationAdapter articleAdapter;
     private ArrayList<String> articleList;
     private FTPClient client;
     private ArrayList<String> articleImages;
@@ -43,11 +44,10 @@ public class CarletonFragment extends Fragment {
         client = new FTPClient();
         articleList = new ArrayList<>();
         articleImages = new ArrayList<>();
-
-
+        articleInformation = new ArrayList<>();
 
         articles = (ListView) view.findViewById(R.id.carleton_list);
-        articleAdapter = new ArticleAdapter(articleInformation, getActivity());
+        articleAdapter = new ArticleInformationAdapter(articleInformation, getActivity());
 
         articles.setAdapter(articleAdapter);
 
@@ -64,6 +64,24 @@ public class CarletonFragment extends Fragment {
             this.client = client;
         }
 
+        private ProgressDialog pDlg = null;
+
+        private void showProgressDialog() {
+
+            pDlg = new ProgressDialog(getActivity());
+            pDlg.setMessage("Retrieving Articles");
+            pDlg.setProgressDrawable(getActivity().getWallpaper());
+            pDlg.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            pDlg.setCancelable(false);
+            pDlg.show();
+
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            showProgressDialog();
+        }
 
         @Override
         protected ArrayList<ArticleInformation> doInBackground(Void... params) {
@@ -109,8 +127,9 @@ public class CarletonFragment extends Fragment {
         @Override
         protected void onPostExecute(ArrayList<ArticleInformation> result) {
             super.onPostExecute(result);
+            pDlg.dismiss();
             Log.d("Result Size", "" + result.size());
-            articleAdapter.addAll(result);
+            articleAdapter.setArticleInformation(result);
             articleAdapter.notifyDataSetChanged();
             articles.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override

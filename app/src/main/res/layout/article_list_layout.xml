@@ -8,7 +8,6 @@
         android:layout_height="wrap_content"
         android:id="@+id/article_picture"
         android:padding="5dp"
-
         />
     <TextView
         android:layout_width="match_parent"

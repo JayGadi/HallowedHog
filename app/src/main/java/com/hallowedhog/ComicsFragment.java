@@ -1,5 +1,6 @@
 package com.hallowedhog;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -27,9 +28,10 @@ public class ComicsFragment extends Fragment {
 
 
     private ListView articles;
-    private ArticleAdapter articleAdapter;
+    private ArticleInformationAdapter articleAdapter;
     private ArrayList<String> articleList;
-    private ArrayList<Bitmap> articleImages;
+    private ArrayList<String> articleImages;
+    private ArrayList<ArticleInformation> articleInformation;
     private FTPClient client;
 
     @Override
@@ -41,9 +43,10 @@ public class ComicsFragment extends Fragment {
         client = new FTPClient();
         articleList = new ArrayList<>();
         articleImages = new ArrayList<>();
+        articleInformation = new ArrayList<>();
 
         articles = (ListView) view.findViewById(R.id.comics_list);
-        articleAdapter = new ArticleAdapter(articleList, articleImages, getActivity());
+        articleAdapter = new ArticleInformationAdapter(articleInformation, getActivity());
 
         articles.setAdapter(articleAdapter);
 
@@ -52,7 +55,7 @@ public class ComicsFragment extends Fragment {
         return view;
     }
 
-    private class ComicsAsync extends AsyncTask<Void, Void, ArrayList<String>> {
+    private class ComicsAsync extends AsyncTask<Void, Void, ArrayList<ArticleInformation>> {
 
         FTPClient client;
 
@@ -60,9 +63,27 @@ public class ComicsFragment extends Fragment {
             this.client = client;
         }
 
+        private ProgressDialog pDlg = null;
+
+        private void showProgressDialog() {
+
+            pDlg = new ProgressDialog(getActivity());
+            pDlg.setMessage("Retrieving Articles");
+            pDlg.setProgressDrawable(getActivity().getWallpaper());
+            pDlg.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            pDlg.setCancelable(false);
+            pDlg.show();
+
+        }
 
         @Override
-        protected ArrayList<String> doInBackground(Void... params) {
+        protected void onPreExecute() {
+            super.onPreExecute();
+            showProgressDialog();
+        }
+
+        @Override
+        protected ArrayList<ArticleInformation> doInBackground(Void... params) {
 
             FTPFile[] files = null;
 
@@ -86,22 +107,27 @@ public class ComicsFragment extends Fragment {
                     files = client.listFiles("/public_html/archives/Comics/" + article);
                     for(FTPFile file: files){
                         if(file.getName().contains("Picture")){
-                            articleImages.add(BitmapFactory.decodeStream((InputStream) new URL("http://hallowedhog.com/archives/Comics/" + article + "/" + file.getName()).getContent()));
+                            articleImages.add("http://hallowedhog.com/archives/Comics/" + article + "/" + file.getName());
                         }
                     }
+                }
+
+                for(int i = 0; i < articleList.size(); i++){
+                    articleInformation.add(new ArticleInformation(articleImages.get(i), articleList.get(i)));
                 }
 
             }catch(IOException e){
                 e.printStackTrace();
             }
 
-            return articleList;
+            return articleInformation;
         }
 
         @Override
-        protected void onPostExecute(ArrayList<String> result) {
+        protected void onPostExecute(ArrayList<ArticleInformation> result) {
             super.onPostExecute(result);
-            articleAdapter.addAll(result);
+            pDlg.dismiss();
+            articleAdapter.setArticleInformation(result);
             articleAdapter.notifyDataSetChanged();
             articles.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
