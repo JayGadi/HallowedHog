@@ -5,13 +5,15 @@
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="200dp"
-        android:id="@+id/top_article" />
+        android:id="@+id/top_article"
+        android:background="#fff"/>
 
     <ListView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/top_list"
-        android:layout_below="@id/top_article">
+        android:layout_below="@id/top_article"
+        android:background="#fff">
 
     </ListView>
 

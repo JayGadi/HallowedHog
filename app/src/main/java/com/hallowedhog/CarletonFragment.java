@@ -92,7 +92,7 @@ public class CarletonFragment extends Fragment {
                 client.connect("hallowedhog.com");
                 client.enterLocalPassiveMode();
                 client.login("hallowedhog", "!AbcD321hog");
-                files = client.listFiles("/public_html/archives/Carleton");
+                files = client.listFiles("/public_html/archives/Testing");
 
 
                 for (FTPFile file : files) {
@@ -105,10 +105,10 @@ public class CarletonFragment extends Fragment {
                 }
                 Log.d("Article List", "" + articleList.size());
                 for(String article: articleList){
-                    files = client.listFiles("/public_html/archives/Carleton/" + article);
+                    files = client.listFiles("/public_html/archives/Testing/" + article);
                     for(FTPFile file: files){
                         if(file.getName().contains("Picture")){
-                            articleImages.add("http://hallowedhog.com/archives/Carleton/" + article + "/" + file.getName());
+                            articleImages.add("http://hallowedhog.com/archives/Testing/" + article + "/" + file.getName());
                         }
                     }
                 }
@@ -134,53 +134,17 @@ public class CarletonFragment extends Fragment {
             articles.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    Log.d("File Clicked", (String) articles.getAdapter().getItem(position));
+                    Intent pdfViewer = new Intent(getActivity(), ArticleViewActivity.class);
 
-                    new OpenArticle().execute((String) articles.getAdapter().getItem(position));
+                    Log.d("URL", "http://hallowedhog.com/archives/Testing/" + articleList.get(position) + "/" + articleList.get(position).substring(11) + ".txt");
+                    pdfViewer.putExtra("url", "http://hallowedhog.com/archives/Testing/" + articleList.get(position) + "/" + articleList.get(position).substring(11) + ".txt");
+                    pdfViewer.putExtra("picture", articleImages.get(position));
+                    startActivity(pdfViewer);
+
 
                 }
             });
 
         }
     }
-
-    private class OpenArticle extends AsyncTask<String, Void, String>{
-
-        String url;
-        @Override
-        protected String doInBackground(String... params) {
-
-            String article = "";
-
-            url = params[0];
-            try {
-                client.listFiles("/public_html/archives/Carleton/" + url);
-                for (FTPFile file : client.listFiles("/public_html/archives/Carleton/" + url)) {
-                    Log.d("File", file.getName());
-                    if(file.getName().contains(".pdf")){
-                        article = file.getName();
-                    }
-
-                }
-            } catch (IOException e) {
-
-            }
-            return article;
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            super.onPostExecute(result);
-            Intent pdfViewer = new Intent(getActivity(), ArticleViewActivity.class);
-
-            Log.d("URL", url+"/"+result);
-            pdfViewer.putExtra("url", "Carleton/" + url +"/"+result);
-            startActivity(pdfViewer);
-
-
-        }
-
-    }
-
-
 }

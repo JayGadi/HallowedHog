@@ -8,6 +8,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -36,6 +37,7 @@ public class TopFragment extends Fragment {
     private FTPClient client;
     private ArrayList<String> articleImages;
     private ArrayList<ArticleInformation> articleInformation;
+    private ArrayList<Drawable> topImages;
     int count = 0;
 
     @Override
@@ -48,6 +50,7 @@ public class TopFragment extends Fragment {
         articleList = new ArrayList<>();
         articleImages = new ArrayList<>();
         articleInformation = new ArrayList<>();
+        topImages = new ArrayList<>();
 
         topArticle = (ImageView) view.findViewById(R.id.top_article);
         topList = (ListView) view.findViewById(R.id.top_list);
@@ -136,6 +139,7 @@ public class TopFragment extends Fragment {
 
                 for(int i = 0; i < articleList.size(); i++){
                     articleInformation.add(new ArticleInformation(articleImages.get(i), articleList.get(i)));
+                    topImages.add(AsyncImageLoader.loadScaledImageFromUrl(articleImages.get(i)));
                 }
 
 
@@ -151,20 +155,33 @@ public class TopFragment extends Fragment {
             super.onPostExecute(result);
             pDlg.dismiss();
             articleAdapter.setArticleInformation(result);
+            articleAdapter.notifyDataSetChanged();
 
-            /*topArticle.setImageDrawable(AsyncImageLoader.loadImageFromUrl(articleImages.get(count)));
-            topArticle.setOnClickListener(new View.OnClickListener() {
+
+            Runnable r = new Runnable(){
+                public void run(){
+                    topArticle.setImageDrawable(topImages.get(count));
+                    count++;
+                    if(count == topImages.size()-1){
+                        count = 0;
+                    }
+                    topArticle.postDelayed(this, 3000);
+                }
+            };
+
+            topArticle.postDelayed(r, 1);
+
+
+            /*topArticle.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
 
-                    topArticle.setImageDrawable(AsyncImageLoader.loadImageFromUrl(articleImages.get(count++)));
-                    if(count == articleImages.size()){
+                    topArticle.setImageDrawable(topImages.get(count++));
+                    if(count == topImages.size()){
                         count = 0;
                     }
                 }
             });*/
-
-            articleAdapter.notifyDataSetChanged();
 
             /*
             articles.setOnItemClickListener(new AdapterView.OnItemClickListener() {
